@@ -39,6 +39,16 @@ export function initViewer({ run, charts }) {
 
   function render() {
     const chart = charts[index];
+    let retried = false;
+    img.onerror = () => {
+      if (retried) return; // give up after one retry; leaves a broken image
+      retried = true;
+      const { url } = chart;
+      img.src = '';
+      setTimeout(() => {
+        img.src = url;
+      }, 500);
+    };
     img.src = chart.url;
     infobar.textContent = infoText(chart, run);
     counter.textContent = `${index + 1}/${charts.length}`;

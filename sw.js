@@ -36,8 +36,13 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(event.request)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(SHELL_CACHE).then((c) => c.put(event.request, copy));
+          // Only cache real successes. Cross-origin <img> fetches are no-cors,
+          // so a chart response is opaque (status 0) and its 404-ness cannot be
+          // read; opaque responses are cached, detectable error statuses are not.
+          if (res && (res.ok || res.type === 'opaque')) {
+            const copy = res.clone();
+            caches.open(SHELL_CACHE).then((c) => c.put(event.request, copy));
+          }
           return res;
         })
         .catch(() => caches.match(event.request)),
