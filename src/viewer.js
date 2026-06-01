@@ -29,10 +29,14 @@ export function initViewer({ run, charts }) {
 
   // Panzoom is bound to the fixed-size frame (not the <img>), so its contain
   // bounds are correct immediately and do not depend on image load timing.
+  // contain:'outside' keeps the frame covering the viewport: zoom in past 1x is
+  // allowed and panning is bounded so the chart can't be dragged off-screen.
+  // ('inside' would clamp the scale to 1 because the frame already fills the
+  // parent, which silently disabled all zooming.)
   const pz = Panzoom(frame, {
     minScale: 1,
     maxScale: 8,
-    contain: 'inside',
+    contain: 'outside',
     startScale: 1,
     cursor: 'grab',
   });
