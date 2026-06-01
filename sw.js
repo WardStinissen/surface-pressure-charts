@@ -1,5 +1,5 @@
 // sw.js
-const SHELL_CACHE = 'sp-shell-v1';
+const SHELL_CACHE = 'sp-shell-v2';
 const CHART_HOST = 'data.consumer-digital.api.metoffice.gov.uk';
 const SHELL = [
   './',
