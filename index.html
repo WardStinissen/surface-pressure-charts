@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0b1220">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <title>Surface Pressure Charts</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="vendor/panzoom.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div id="stage" class="stage">
+      <div id="frame" class="frame">
+        <img id="chart" class="chart-img" alt="Surface pressure chart" draggable="false">
+      </div>
+    </div>
+
+    <div id="infobar" class="infobar" hidden></div>
+    <div id="lockchip" class="lockchip" hidden>🔒 zoom locked</div>
+    <button id="reset" class="reset-btn" type="button" hidden aria-label="Reset zoom">⤢</button>
+
+    <div id="botbar" class="botbar" hidden>
+      <button id="prev" class="nav-arrow" type="button" aria-label="Previous chart">‹</button>
+      <input id="scrub" class="scrub" type="range" min="0" max="0" value="0" step="1" aria-label="Forecast step">
+      <button id="next" class="nav-arrow" type="button" aria-label="Next chart">›</button>
+      <span id="counter" class="counter"></span>
+    </div>
+
+    <div id="loading" class="overlay">Loading latest charts…</div>
+    <div id="error" class="overlay" hidden></div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
