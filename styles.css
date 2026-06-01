@@ -8,6 +8,10 @@
 
 * { box-sizing: border-box; }
 
+/* The hidden attribute must win over class-level display rules (e.g. .overlay,
+   .botbar use display:flex, which would otherwise override [hidden]). */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   height: 100%;
