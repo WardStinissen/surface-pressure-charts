@@ -4,6 +4,7 @@ import { leadLabel, formatValidTime, tzAbbr, formatRun } from './format.js';
 const Panzoom = window.Panzoom;
 const DEVICE_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const DOUBLE_TAP_MS = 300;
+const TAP_MOVE_PX = 10;
 const ZOOM_IN_SCALE = 2.5;
 
 function infoText(chart, run) {
@@ -13,6 +14,7 @@ function infoText(chart, run) {
 }
 
 export function initViewer({ run, charts }) {
+  const frame = document.getElementById('frame');
   const img = document.getElementById('chart');
   const infobar = document.getElementById('infobar');
   const botbar = document.getElementById('botbar');
@@ -25,7 +27,9 @@ export function initViewer({ run, charts }) {
 
   let index = 0;
 
-  const pz = Panzoom(img, {
+  // Panzoom is bound to the fixed-size frame (not the <img>), so its contain
+  // bounds are correct immediately and do not depend on image load timing.
+  const pz = Panzoom(frame, {
     minScale: 1,
     maxScale: 8,
     contain: 'inside',
@@ -60,20 +64,64 @@ export function initViewer({ run, charts }) {
   scrub.addEventListener('input', () => go(Number(scrub.value)));
   resetBtn.addEventListener('click', () => pz.reset());
 
-  // Zoom UI sync
-  img.addEventListener('panzoomchange', updateZoomUi);
+  // Keep the zoom UI (reset button + lock chip) in sync with the zoom level
+  frame.addEventListener('panzoomchange', updateZoomUi);
 
-  // Double-tap / double-click to toggle zoom
-  let lastTap = 0;
-  img.addEventListener('pointerup', (e) => {
-    const now = e.timeStamp;
-    if (now - lastTap < DOUBLE_TAP_MS) {
+  // Double-tap to toggle zoom — gated to genuine single-finger taps so it does
+  // not mis-fire at the end of a pan drag or pinch (which emit extra pointerups).
+  let activePointers = 0;
+  let multiTouch = false;
+  let moved = false;
+  let downX = 0;
+  let downY = 0;
+  let downTime = 0;
+  let lastTapTime = 0;
+
+  frame.addEventListener('pointerdown', (e) => {
+    activePointers += 1;
+    if (activePointers > 1) {
+      multiTouch = true;
+      return;
+    }
+    downX = e.clientX;
+    downY = e.clientY;
+    downTime = e.timeStamp;
+    moved = false;
+  });
+
+  frame.addEventListener('pointermove', (e) => {
+    if (activePointers === 1 && !moved) {
+      if (Math.abs(e.clientX - downX) > TAP_MOVE_PX || Math.abs(e.clientY - downY) > TAP_MOVE_PX) {
+        moved = true;
+      }
+    }
+  });
+
+  function onPointerUp(e) {
+    activePointers = Math.max(0, activePointers - 1);
+    if (activePointers > 0) return; // wait until every finger is lifted
+
+    const wasTap = !multiTouch && !moved && e.timeStamp - downTime <= DOUBLE_TAP_MS;
+    multiTouch = false;
+    if (!wasTap) {
+      lastTapTime = 0;
+      return;
+    }
+
+    if (e.timeStamp - lastTapTime < DOUBLE_TAP_MS) {
       if (pz.getScale() > 1.01) pz.reset();
       else pz.zoomToPoint(ZOOM_IN_SCALE, e);
-      lastTap = 0;
+      lastTapTime = 0;
     } else {
-      lastTap = now;
+      lastTapTime = e.timeStamp;
     }
+  }
+
+  frame.addEventListener('pointerup', onPointerUp);
+  frame.addEventListener('pointercancel', () => {
+    activePointers = Math.max(0, activePointers - 1);
+    if (activePointers === 0) multiTouch = false;
+    moved = true; // invalidate any pending tap from this gesture
   });
 
   // Reveal controls
