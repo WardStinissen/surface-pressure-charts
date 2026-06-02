@@ -46,4 +46,13 @@ async function boot() {
   }
 }
 
+// iOS Safari ignores user-scalable=no, so a pinch that starts off the chart
+// zooms the whole page; the fixed controls then shift out of alignment and feel
+// unresponsive until an orientation change resets the zoom. Blocking Safari's
+// proprietary gesture events stops page zoom. The chart's own pinch uses pointer
+// events (Panzoom) and is unaffected.
+for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+  document.addEventListener(type, (e) => e.preventDefault(), { passive: false });
+}
+
 boot();

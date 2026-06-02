@@ -1,5 +1,5 @@
 // sw.js
-const SHELL_CACHE = 'sp-shell-v7';
+const SHELL_CACHE = 'sp-shell-v8';
 const SHELL = [
   './',
   './index.html',
