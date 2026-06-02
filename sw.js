@@ -1,6 +1,5 @@
 // sw.js
-const SHELL_CACHE = 'sp-shell-v6';
-const CHART_HOST = 'data.consumer-digital.api.metoffice.gov.uk';
+const SHELL_CACHE = 'sp-shell-v7';
 const SHELL = [
   './',
   './index.html',
@@ -29,27 +28,23 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  if (event.request.method !== 'GET') return;
 
-  // Chart GIFs: network-first (always prefer latest), fall back to cache.
-  if (url.hostname === CHART_HOST) {
-    event.respondWith(
-      fetch(event.request)
-        .then((res) => {
-          // Only cache real successes. Cross-origin <img> fetches are no-cors,
-          // so a chart response is opaque (status 0) and its 404-ness cannot be
-          // read; opaque responses are cached, detectable error statuses are not.
-          if (res && (res.ok || res.type === 'opaque')) {
-            const copy = res.clone();
-            caches.open(SHELL_CACHE).then((c) => c.put(event.request, copy));
-          }
-          return res;
-        })
-        .catch(() => caches.match(event.request)),
-    );
-    return;
-  }
-
-  // App shell: cache-first.
-  event.respondWith(caches.match(event.request).then((hit) => hit || fetch(event.request)));
+  // Network-first for everything (app code and chart GIFs alike): when online,
+  // the latest version is always used, so updated code is never stuck behind a
+  // stale cache. The cache is only a fallback for offline use.
+  event.respondWith(
+    fetch(event.request)
+      .then((res) => {
+        // Cache successful or opaque (cross-origin no-cors) responses. Charts
+        // are opaque (status 0), so their 404-ness can't be read; detectable
+        // error statuses are not cached.
+        if (res && (res.ok || res.type === 'opaque')) {
+          const copy = res.clone();
+          caches.open(SHELL_CACHE).then((c) => c.put(event.request, copy));
+        }
+        return res;
+      })
+      .catch(() => caches.match(event.request)),
+  );
 });

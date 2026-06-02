@@ -34,6 +34,14 @@ async function boot() {
   initViewer({ run, charts });
 
   if ('serviceWorker' in navigator) {
+    // When an updated service worker takes control, reload once so the new app
+    // code is used immediately rather than on a later visit.
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloading) return;
+      reloading = true;
+      window.location.reload();
+    });
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 }
